@@ -15,9 +15,11 @@
     * **curl -X POST http://localhost:5000/delete_node -H "Content-Type: application/json" -d '{"node_id": "node-<node_id>"}'**
     * **curl -X GET http://localhost:5000/list_pods**
 * Finally, pod will be rescheduled to a different node and if a node doesn't have any pods, it will be deleted with no pod rescheduling.
+* CLI has also been added for this week.
 
 ## WEEK 3
 * Nodes are being added correctly.
 * Pods are scheduled properly.
 * Health monitoring works as expected.
 * Failure detection and recovery are handled.
+* UI using HTML, CSS and JAVASCRIPT has been added which works in the link: http://localhost:5000/dashboard
