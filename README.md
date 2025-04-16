@@ -23,3 +23,4 @@
 * Health monitoring works as expected.
 * Failure detection and recovery are handled.
 * UI using HTML, CSS and JAVASCRIPT has been added which works in the link: http://localhost:5000/dashboard
+* Final week code is in folder api.
