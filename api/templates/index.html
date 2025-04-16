@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Pod Scheduler</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+    <div class="container">
+        <h1>Pod Scheduler Dashboard</h1>
+
+        <button onclick="addNode()">Add Node</button>
+        <button onclick="listNodes()">List Node</button>
+        <button onclick="showScheduleForm()">Schedule Pod</button>
+        <button onclick="deleteNode()">Delete Node</button>
+        <a href="/heartbeat_page" class="heartbeat-link">View Heartbeats</a>
+
+        <div id="nodeList"></div>
+
+        <div id="podForm" style="display: none;">
+            <h3>Schedule Pod</h3>
+            <label for="podId">Pod ID:</label>
+		<input type="text" id="podId" placeholder="e.g., pod-1">
+
+		<label for="cpuRequest">CPU Request:</label>
+		<input type="number" id="cpuRequest" value="1" min="1" step="1">
+
+		<label for="strategySelect">Strategy:</label>
+		<select id="strategySelect">
+		    <option value="first_fit">First Fit</option>
+		    <option value="best_fit">Best Fit</option>
+		    <option value="worst_fit">Worst Fit</option>
+		</select>
+
+		<button onclick="schedulePod()">Schedule Pod</button>
+
+        </div>
+    </div>
+
+    <script>
+        async function addNode() {
+            const res = await fetch('/add_node', { method: 'POST' });
+            const data = await res.json();
+            alert(`Node Added: ${JSON.stringify(data)}`);
+            listNodes();
+        }
+
+        async function listNodes() {
+    const res = await fetch('/list_nodes');
+    const nodes = await res.json();
+    const container = document.getElementById('nodeList');
+
+    container.innerHTML = `<h3>Nodes</h3><ul>${
+        Object.entries(nodes).map(([id, data]) => `
+            <li>
+                <strong>${id}</strong> - 
+                CPU: ${data.cpu_cores ?? 'N/A'} used / ${data.used_cpu ?? 0}, 
+                Pods: ${data.pods?.join(', ') || 'None'}
+            </li>
+        `).join('')
+    }</ul>`;
+}
+
+
+        function showScheduleForm() {
+            document.getElementById('podForm').style.display = 'block';
+        }
+
+        async function schedulePod() {
+    const podId = document.getElementById('podId').value.trim();
+    const cpuRequest = parseInt(document.getElementById('cpuRequest').value.trim()) || 1;
+    const strategy = document.getElementById('strategySelect')?.value || 'first_fit';
+
+    if (!podId) {
+        alert("Please enter a Pod ID.");
+        return;
+    }
+
+    const res = await fetch('/schedule_pod', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+            pod_id: podId,
+            cpu_request: cpuRequest,
+            strategy: strategy
+        })
+    });
+
+    const result = await res.json();
+    if (res.ok && result.node_id) {
+        alert(` Pod ${result.pod_id} scheduled on ${result.node_id}`);
+        listNodes();  // Refresh node list
+    } else {
+        alert(` Failed to schedule pod: ${result.error || 'No suitable node found'}`);
+    }
+}
+
+
+        async function deleteNode() {
+            const node_id = prompt("Enter Node ID to delete:");
+            if (!node_id) return;
+            const res = await fetch('/delete_node', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ node_id })
+            });
+            const data = await res.json();
+            alert(JSON.stringify(data));
+            listNodes();
+        }
+    </script>
+</body>
+</html>
+

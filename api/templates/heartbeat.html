@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Heartbeat Monitor</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <style>
+        body { font-family: Arial, sans-serif; }
+        .container { max-width: 600px; margin: 40px auto; padding: 20px; }
+        .back-link { display: inline-block; margin-top: 20px; text-decoration: none; color: #007BFF; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Heartbeat Monitor</h1>
+        <div id="heartbeatDisplay">Waiting for heartbeats...</div>
+        <a href="/" class="back-link">← Back to Dashboard</a>
+    </div>
+
+    <script>
+        async function updateHeartbeats() {
+            try {
+                const res = await fetch('/list_nodes');
+                const nodes = await res.json();
+                const timestamp = new Date().toLocaleTimeString();
+                let html = `<p>[${timestamp}] Active Nodes:</p><ul>`;
+
+                if (Array.isArray(nodes)) {
+                    // If it's just an array of node names
+                    html += nodes.map(n => `<li>${n}</li>`).join('');
+                } else {
+                    // If it's a dictionary with node details
+                    html += Object.entries(nodes).map(([node, data]) => {
+                        const cpu = data.cpu_cores ?? "Unknown";
+                        const pods = (data.pods && data.pods.length) ? data.pods.join(', ') : 'None';
+                        return `<li><strong>${node}</strong> - CPU: ${cpu}, Pods: ${pods}</li>`;
+                    }).join('');
+                }
+
+                html += '</ul>';
+                document.getElementById('heartbeatDisplay').innerHTML = html;
+            } catch (err) {
+                document.getElementById('heartbeatDisplay').innerHTML = `<p>Error fetching heartbeats</p>`;
+            }
+        }
+
+        // Load immediately and then refresh every 5 seconds
+        updateHeartbeats();
+        setInterval(updateHeartbeats, 5000);
+    </script>
+</body>
+</html>
+
